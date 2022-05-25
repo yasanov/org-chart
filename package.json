@@ -1,6 +1,6 @@
 {
   "name": "d3-org-chart_forked",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "module": "index",
   "description": "Highly customizable org chart, created with d3",
   "keywords": [
@@ -21,9 +21,9 @@
   },
   "jsnext:main": "index",
   "bugs": {
-    "url": "https://github.com/bumbeishvili/d3-organization-chart/issues"
+    "url": "https://github.com/yasanov/org-chart/issues"
   },
-  "homepage": "https://github.com/bumbeishvili/d3-organization-chart#readme",
+  "homepage": "https://github.com/yasanov/org-chart#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/yasanov/org-chart.git"
