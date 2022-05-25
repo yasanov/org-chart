@@ -26,7 +26,7 @@
   "homepage": "https://github.com/bumbeishvili/d3-organization-chart#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bumbeishvili/d3-organization-chart.git"
+    "url": "https://github.com/yasanov/org-chart.git"
   },
   "scripts": {
     "start": "nodemon ",
