@@ -1,0 +1,30 @@
+:root {
+    --background-skeleton-color: #ddd;
+    --shine-color: #e8e8e8;
+    --animation-duration: 1.6s;
+    --avatar-offset: 52 + 16;
+}
+
+g [disabled] {
+    cursor: auto;
+    color: #3a3a4b50;
+}
+
+.skeleton {
+    background-color: var(--background-skeleton-color);
+    background: linear-gradient(
+            100deg,
+            rgba(255, 255, 255, 0) 40%,
+            rgba(255, 255, 255, .5) 50%,
+            rgba(255, 255, 255, 0) 60%
+    ) var(--background-skeleton-color);
+    background-size: 200% 100%;
+    background-position-x: 180%;
+    animation: 1s loading ease-in-out infinite;
+}
+
+@keyframes loading {
+    to {
+        background-position-x: -20%;
+    }
+}

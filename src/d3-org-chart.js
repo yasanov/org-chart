@@ -4,6 +4,7 @@ import { tree, stratify } from "d3-hierarchy";
 import { zoom, zoomIdentity } from "d3-zoom";
 import { flextree } from 'd3-flextree';
 import { linkHorizontal } from 'd3-shape';
+import './index.css';
 
 const d3 = {
     selection,
@@ -19,8 +20,11 @@ const d3 = {
     linkHorizontal,
 }
 export class OrgChart {
+
+    DISABLED_ATTRIBUTE_NAME = 'disabled';
+
     constructor() {
-        // Exposed variables 
+        // Exposed variables
         const attrs = {
             id: `ID${Math.floor(Math.random() * 1000000)}`, // Id for event handlings
             firstDraw: true,
@@ -84,7 +88,7 @@ export class OrgChart {
                     .attr("stroke", d => d.data._highlighted || d.data._upToTheRootHighlighted ? '#152785' : 'none')
                     .attr("stroke-width", d.data._highlighted || d.data._upToTheRootHighlighted ? 10 : 1)
             },
-
+            buttonClickHandler: null,
             nodeWidth: d3Node => 250,
             nodeHeight: d => 150,
             siblingsMargin: d3Node => 20,
@@ -95,7 +99,7 @@ export class OrgChart {
             onNodeClick: (d) => d,
             linkGroupArc: d3.linkHorizontal().x(d => d.x).y(d => d.y),
             // ({ source, target }) => {
-            //     return 
+            //     return
             //     return `M ${source.x} , ${source.y} Q ${(source.x + target.x) / 2 + 100},${source.y-100}  ${target.x}, ${target.y}`;
             // },
             nodeContent: d => `<div style="padding:5px;font-size:10px;">Sample Node(id=${d.id}), override using <br/> <br/> 
@@ -271,6 +275,29 @@ export class OrgChart {
         };
 
         this.getChartState = () => attrs;
+        this.addData = (data) => {
+            data.forEach((item) => {
+                const nodeFound = attrs.allNodes.filter(({ data }) => attrs.nodeId(data) === attrs.nodeId(item))[0];
+                const parentFound = attrs.allNodes.filter(({ data }) => attrs.nodeId(data) === attrs.parentNodeId(item))[0];
+                if (nodeFound) {
+                    console.log(`ORG CHART - ADD - Node with id "${attrs.nodeId(item)}" already exists in tree`)
+                    return;
+                }
+                if (!parentFound) {
+                    console.log(`ORG CHART - ADD - Parent node with id "${attrs.parentNodeId(item)}" not found in the tree`)
+                    return;
+                }
+                this.addNode(item);
+                const parentNode = attrs.allNodes.filter(parent => attrs.nodeId(parent) === attrs.parentNodeId(item))[0];
+                if (!parentNode._children) {
+                    parentNode._children = [];
+                }
+                const childNode = attrs.allNodes.filter(node => attrs.nodeId(node.id) === attrs.nodeId((item.id)))[0];
+                childNode.compactEven = true;
+                childNode.row = parentNode.row + 1;
+                childNode.firstCompact = null;
+            });
+        };
 
         // Dynamically set getter and setter functions for Chart class
         Object.keys(attrs).forEach((key) => {
@@ -346,7 +373,6 @@ export class OrgChart {
             console.log('ORG CHART - Data is empty')
             return this;
         }
-
         //Drawing containers
         const container = d3.select(attrs.container);
         const containerRect = container.node().getBoundingClientRect();
@@ -374,7 +400,6 @@ export class OrgChart {
             behaviors.zoom = d3.zoom().on("zoom", (event, d) => this.zoomed(event, d)).scaleExtent(attrs.scaleExtent)
             attrs.zoomBehavior = behaviors.zoom;
         }
-
         //****************** ROOT node work ************************
 
         attrs.flexTreeLayout = flextree({
@@ -394,9 +419,7 @@ export class OrgChart {
             }
         })
             .spacing((nodeA, nodeB) => nodeA.parent == nodeB.parent ? 0 : attrs.neightbourMargin(nodeA, nodeB));
-
         this.setLayouts({ expandNodesFirst: false });
-
         // *************************  DRAWING **************************
         //Add svg
         const svg = container
@@ -466,10 +489,8 @@ export class OrgChart {
         }
 
         attrs.chart = chart;
-
         // Display tree contenrs
         this.update(attrs.root);
-
 
         //#########################################  UTIL FUNCS ##################################
         // This function restyles foreign object elements ()
@@ -482,7 +503,6 @@ export class OrgChart {
         if (attrs.firstDraw) {
             attrs.firstDraw = false;
         }
-
         return this;
     }
 
@@ -550,6 +570,7 @@ export class OrgChart {
         })
         return Object.entries(grouped);
     }
+
     calculateCompactFlexDimensions(root) {
         const attrs = this.getChartState();
         root.eachBefore(node => {
@@ -842,7 +863,7 @@ export class OrgChart {
 
         this.restyleForeignObjectElements();
 
-        // Add Node button circle's group (expand-collapse button)
+        // Add Node button circle's group (expand-collapse button)!!!
         const nodeButtonGroups = nodeEnter
             .patternify({
                 tag: "g",
@@ -917,11 +938,11 @@ export class OrgChart {
                 const y = attrs.layoutBindings[attrs.layout].buttonY({ width, height });
                 return `translate(${x},${y})`
             })
-            .attr("display", ({ data }) => {
-                return data._directSubordinates > 0 ? null : 'none';
+            .attr("display", ({ data, ...addAttrs }) => {
+                return data.countDepartments/*_directSubordinates*/ > 0 ? null : 'none';
             })
-            .attr("opacity", ({ children, _children }) => {
-                if (children || _children) {
+            .attr("opacity", ({ children, _children, ...currentNode }) => {
+                if (currentNode?.data?.countDepartments > 0 /*children || _children*/) {
                     return 1;
                 }
                 return 0;
@@ -1066,10 +1087,10 @@ export class OrgChart {
                   L ${x} ${y}
                   L ${x} ${y + h * yrvs}
                   C  ${x} ${y + h * yrvs + r * yrvs} ${x} ${y + h * yrvs + r * yrvs
-            } ${x + r * xrvs} ${y + h * yrvs + r * yrvs}
+        } ${x + r * xrvs} ${y + h * yrvs + r * yrvs}
                   L ${x + w * xrvs + r * xrvs} ${y + h * yrvs + r * yrvs}
                   C  ${ex}  ${y + h * yrvs + r * yrvs} ${ex}  ${y + h * yrvs + r * yrvs
-            } ${ex} ${ey - h * yrvs}
+        } ${ex} ${ey - h * yrvs}
                   L ${ex} ${ey}
        `;
         return path;
@@ -1092,13 +1113,25 @@ export class OrgChart {
     }
 
     // Toggle children on click.
-    onButtonClick(event, d) {
+    async onButtonClick(event, d) {
+        if (event.currentTarget.hasAttribute(this.DISABLED_ATTRIBUTE_NAME)) {
+            return;
+        }
         const attrs = this.getChartState();
+        if (attrs.buttonClickHandler && !d.children?.length && !d._children?.length) {
+            const button = event.currentTarget;
+            this.toggleLoader(true, button);
+            const data = await (new Promise(resolve => attrs.buttonClickHandler(event, d, data => resolve(data))));
+            if (data) {
+                this.addData(data);
+                d = attrs.allNodes.filter(item => attrs.nodeId(item) === attrs.nodeId(d))[0];
+            }
+            this.toggleLoader(false, button);
+        }
         if (attrs.setActiveNodeCentered) {
             d.data._centered = true;
             d.data._centeredWithDescendants = true;
         }
-
         // If childrens are expanded
         if (d.children) {
             //Collapse them
@@ -1120,6 +1153,23 @@ export class OrgChart {
 
         // Redraw Graph
         this.update(d);
+    }
+
+    toggleLoader(isLoad, button) {
+        if (!button) {
+            return;
+        }
+        const LOADING_CLASS_NAME = 'skeleton';
+        const skeletonableComponent = button.getElementsByClassName('node-button-foreign-object')[0]
+            .getElementsByClassName('node-button-div')[0]
+            .getElementsByTagName('div')[0];
+        if (isLoad) {
+            button.setAttribute(this.DISABLED_ATTRIBUTE_NAME, true);
+            skeletonableComponent.classList.add(LOADING_CLASS_NAME);
+        } else {
+            button.removeAttribute(this.DISABLED_ATTRIBUTE_NAME);
+            skeletonableComponent.classList.remove(LOADING_CLASS_NAME);
+        }
     }
 
     // This function changes `expanded` property to descendants
@@ -1458,8 +1508,6 @@ export class OrgChart {
 
 
     }
-
-
 
     exportSvg() {
         const { svg } = this.getChartState();
