@@ -76,7 +76,7 @@ Tip: Just copy this code and paste at - https://realtimehtml.com/
 ### Installing
 
 ```
-npm i d3-org-chart
+npm i --save d3-org-chart_forked
 ```
 
 ```javascript
